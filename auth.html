@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <title>Auth Instagram</title>
+</head>
+<body>
+
+<script type="text/javascript">
+
+  var access_token = window.location.href.replace(/http:\/\/insta\.app\/auth\.html#access_token=/g, '');
+  var userId = parseInt(access_token);
+  localStorage.setItem('accessToken', access_token);
+  localStorage.setItem('userId', userId);
+  window.location.href = 'main.html';
+
+</script>
+
+</body>
+</html>

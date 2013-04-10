@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <title>Instagram</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/scroll/jquery.mCustomScrollbar.css"/>
+  <link rel="stylesheet" href="css/fancybox/jquery.fancybox.css"/>
+  <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="js/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="js/jquery.mousewheel.min.js"></script>
+  <script type="text/javascript" src="js/jquery.mCustomScrollbar.min.js"></script>
+</head>
+<body>
+
+<div id="container">
+
+  <div id="profile-page" class="pages">
+
+    <header class="header">
+      <h4 id="username"></h4>
+    </header>
+    <div id="main-info">
+      <div id="photo"><img src="" alt="" id="profile_picture"/></div>
+      <div id="media">
+        <span id="media-digits"></span>
+        <span class="count">Фото</span>
+      </div>
+      <div id="followed_by">
+        <span id="followed_by-digits"></span>
+        <span class="count">Подписчики</span>
+      </div>
+      <div id="follows">
+        <span id="follows-digits"></span>
+        <span class="count">Подписки</span>
+      </div>
+      <div id="edit">Редактировать ваш профиль</div>
+      <div id="info">
+        <span id="full_name"></span>
+        <span id="bio"></span>
+        <span id="website"><a href="#" target="_blank" id="url"></a></span>
+      </div>
+    </div>
+    <div id="controls">
+      <ul class="contols-buttons">
+        <li class="photo-view active" id="thumb">&nbsp;</li>
+        <li class="photo-view" id="list">&nbsp;</li>
+        <li id="photo-map">Фото-карта</li>
+      </ul>
+    </div>
+    <div id="photos">
+      <ul id="photolist">
+
+      </ul>
+    </div>
+
+  </div>
+
+  <div id="home-page" class="pages">
+
+    <header class="header">
+      <h4 id="instagram">Instagram</h4>
+    </header>
+
+    <ul id="feed">
+
+    </ul>
+
+
+  </div>
+
+  <div id="popular-page" class="pages">
+
+    <header class="header">
+      <h4 id="interesing">Interesting</h4>
+    </header>
+
+    <div id="search-users-hashes">
+      <input type="text" id="random-search" placeholder="Поиск пользователей и хэштегов"/>
+    </div>
+
+    <ul id="popular-photos">
+
+    </ul>
+
+
+  </div>
+
+  <div id="followers" class="pages">
+
+    <header class="header">
+      <h4>Followers</h4>
+    </header>
+
+    <ul id="foll-list">
+
+    </ul>
+
+  </div>
+
+  <div id="app-controls">
+    <ul class="app-buttons">
+      <li id="home" class="controls"></li>
+      <li id="popular" class="controls"></li>
+      <li id="camera" class="controls"></li>
+      <li id="activity" class="controls"></li>
+      <li id="profile" class="controls"></li>
+    </ul>
+  </div>
+</div>
+
+<script type="text/javascript">
+
+  var InstaApp = function(){
+
+    var clientId = '7cc73a7b070d4cb0b74b71d47addbdba';
+
+    this.access_token = localStorage.getItem('accessToken');
+    this.userId = localStorage.getItem('userId');
+
+    // Public Methods
+
+    this.userInfo = function(userId){
+      var qq = $.ajax({
+        type: 'GET',
+        dataType: 'jsonp',
+        cache: false,
+        url: 'https://api.instagram.com/v1/users/' + userId + '?access_token=' + this.access_token,
+        success: function(data) {
+          var user = data.data;
+          $('#username').html(user.username);
+          $('#profile_picture').attr('src', user.profile_picture).attr('data-id', user.id);
+          $('#media-digits').html(user.counts.media);
+          $('#followed_by-digits').html(user.counts.followed_by);
+          $('#follows-digits').html(user.counts.follows);
+          $('#full_name').html(user.full_name);
+          $('#bio').html(user.bio);
+          $('#url').html(user.website.replace(/http:\/\//g, '')).attr('href', user.website);
+        }
+      });
+      localStorage.setItem('defaultProfile', 1);
+    };
+
+    this.getFeed = function(){
+      var qq = $.ajax({
+        type: 'GET',
+        dataType: 'jsonp',
+        cache: false,
+        url: 'https://api.instagram.com/v1/users/self/feed?access_token=' + this.access_token,
+        success: function(data) {
+          var feed = data.data, feedLen = feed.length, $feed = $('#feed'), html = '';
+          for (var i=0; i<feedLen; i++){
+            if (feed[i].likes != null){
+              var likes = feed[i].likes.count;
+            } else {
+              likes = 0;
+            }
+
+            if (feed[i].comments != null){
+              var comments = function(){
+                var commentsArr = feed[i].comments.data, commentsLen = commentsArr.length, total = '';
+                for (var j=0; j<commentsLen; j++){
+                  var comment = '<li class="feed-comment"><span class="comment-username">' + commentsArr[j].from.username + '</span><span class="comment-text">' + commentsArr[j].text + '</span></li>';
+                  total = total + comment;
+                }
+                return total;
+              }
+            } else {
+              comments = function(){ return '' };
+            }
+
+            html = html + '<li class="feed-item">' +
+              '<img class="feed-profile-pic" src="' + feed[i].user.profile_picture + '">' +
+              '<span class="feed-username">' + feed[i].user.username + '</span>' +
+              '' +
+              '<img class="feed-pic" src="' + feed[i].images.standard_resolution.url + '" />' +
+              '<span class="feed-likes">Likes: ' + likes + '</span>' +
+              '<ul class="comments">' + comments() + '</ul>' +
+              '<input type="text" style="display: none;" class="comment-text" id="' + feed[i].id + '"><button style="display: none;" class="send-comment" data-id="' + feed[i].id + '">Отправить коммент</button>' +
+              '<span class="click-like" data-id="' + feed[i].id + '">Мне нравится</span>' +
+              '<span class="post-comment">Комментарий</span>' +
+              '<span class="external">...</span>' +
+              '</li>';
+          }
+          $feed.html(html).mCustomScrollbar({
+            theme: "dark-thin",
+            mouseWheel: true,
+            mouseWheelPixels: 400,
+            autoHideScrollbar: true
+          });
+        }
+      });
+      localStorage.setItem('defaultFeed', 1);
+    };
+
+    this.getPopular = function(){
+      var qq = $.ajax({
+        type: 'GET',
+        dataType: 'jsonp',
+        cache: false,
+        url: 'https://api.instagram.com/v1/media/popular/?access_token=' + this.access_token,
+        success: function(data) {
+          var photos = data.data, photoLen = photos.length, $popularPhotos = $('#popular-photos'), html = '';
+          console.log(photos);
+          for (var i=0; i<photoLen; i++){
+            if (photos[i].caption != null) {
+              var caption = photos[i].caption.text;
+            } else {
+              caption = '';
+            }
+            html = html + '<li class="instaphoto"><img class="fancybox" href="' + photos[i].images.standard_resolution.url + '" src="' + photos[i].images.thumbnail.url + '" title="' + caption + '" /></li>';
+          }
+          $popularPhotos.html(html).mCustomScrollbar({
+            theme: "dark-thin",
+            mouseWheel: true,
+            mouseWheelPixels: 400,
+            autoHideScrollbar: true
+          });
+        }
+      });
+    };
+
+
+    this.getPhotos = function(userId, type){
+      var qq = $.ajax({
+        type: 'GET',
+        dataType: 'jsonp',
+        cache: false,
+        url: 'https://api.instagram.com/v1/users/' + userId + '/media/recent?access_token=' + this.access_token,
+        success: function(data) {
+          var photos = data.data, photoLen = photos.length, $photolist = $('#photolist'), html = '';
+          for (var i=0; i<photoLen; i++){
+
+            if (type !== 'thumb') {
+              var res = photos[i].images.standard_resolution.url;
+            } else {
+              res = photos[i].images.thumbnail.url;
+            }
+
+            if (photos[i].caption != null) {
+              var caption = photos[i].caption.text;
+            } else {
+              caption = '';
+            }
+            html = html + '<li class="instaphoto"><img class="fancybox" href="' + photos[i].images.standard_resolution.url + '" src="' + res + '" title="' + caption + '" /></li>';
+          }
+          $photolist.html(html);
+          // Scroll for Images' Container
+          $photolist.mCustomScrollbar({
+            theme: "dark-thin",
+            mouseWheel: true,
+            mouseWheelPixels: 400,
+            autoHideScrollbar: true
+          });
+        }
+      });
+    };
+
+    this.getFoll = function(userId, type){
+      var qq = $.ajax({
+        type: 'GET',
+        dataType: 'jsonp',
+        cache: false,
+        url: 'https://api.instagram.com/v1/users/' + userId + '/' + type + '?access_token=' + this.access_token,
+        success: function(data) {
+          var followers = data.data, followersLen = followers.length, $followersList = $('#foll-list'), html = '';
+
+          for (var i=0; i<followersLen; i++){
+            html = html + '<li class="followers-item">' +
+              '<img class="follow-avatar" data-url="' + followers[i].id + '" src="' + followers[i].profile_picture + '" alt=""/>' +
+              '<span class="follow-username">' + followers[i].username + '</span>' +
+              '<span class="follow-realname">' + followers[i].full_name + '</span>' +
+              '</li>'
+          }
+
+          $followersList.html(html);
+          // Scroll for Images' Container
+          $followersList.mCustomScrollbar({
+            theme: "dark-thin",
+            mouseWheel: true,
+            mouseWheelPixels: 400,
+            autoHideScrollbar: true
+          });
+        }
+      });
+    };
+
+    /*  Not Working, need permission from API Developers, but they keep silence
+     this.postLike = function(photoId){
+      $.ajax({
+        type: 'POST',
+        dataType: 'jsonp',
+        url: 'https://api.instagram.com/v1/media/' + photoId + '/likes',
+        data: { "access_token": access_token },
+        success: function(data){
+          console.log(data);
+        }
+      });
+    };
+
+    this.sendComment = function(photoId, text){
+      $.ajax({
+        type: 'POST',
+        dataType: 'jsonp',
+        url: 'https://api.instagram.com/v1/media/' + photoId + '/comments',
+        data: { "access_token": access_token, "text": text },
+        success: function(data){
+          console.log(data);
+        }
+      });
+    };
+    */
+  };
+
+  var instApp = new InstaApp();
+
+
+  $(document).ready(function(){
+
+    // First Load
+    $('#home-page').show();
+    instApp.getFeed();
+
+    $body = $('body');
+
+    $body.on('click', '.controls', function(e){
+      e.preventDefault();
+      $(this).siblings().removeClass('active');
+      $(this).addClass('active');
+      var activeTabId = $(this).attr('id');
+      $('.pages').hide();
+      $('#' + activeTabId + '-page').show();
+    });
+
+    // Add Handler for photos
+    $("#profile").on('click', function(e){
+      e.preventDefault();
+      var userId = instApp.userId;
+      instApp.userInfo(userId);
+      instApp.getPhotos(userId, 'thumb');
+    });
+
+    // Add Handler for #list and #thumb view
+    $body.on('click', '.photo-view', function(e){
+      e.preventDefault();
+      $('.photo-view').removeClass('active');
+      $(this).addClass('active');
+
+      // Change Photo-View
+      var userId = $('#profile_picture').attr('data-id');
+      instApp.getPhotos(userId, null);
+      $('#photolist').toggleClass('list');
+    });
+
+    // Add Handler for Home Page
+    $body.on('click', '#home', function(e){
+      e.preventDefault();
+      instApp.getFeed();
+    });
+
+    // Add Handler for Home Page
+    $body.on('click', '#popular', function(e){
+      e.preventDefault();
+      instApp.getPopular();
+    });
+
+    // Fancybox for Images
+    $('.fancybox').fancybox();
+
+    // Add Handler for like-button
+    $body.on('click', '.click-like', function(e){
+      e.preventDefault();
+      $(this).toggleClass('active');
+      var photoId = $(this).data('id');
+      instApp.postLike(photoId);
+    });
+
+    // Add Handler for send comment button
+    $body.on('click', '.send-comment', function(e){
+      e.preventDefault();
+      var photoId = $(this).data('id');
+      var text = $('#' + photoId).val();
+      instApp.sendComment(photoId, text);
+    });
+
+    // Add Handler for view list of Followers
+    $body.on('click', '#followed_by', function(e){
+      e.preventDefault();
+      $('.pages').hide();
+      $('#followers').show();
+      var userId = $('#profile_picture').attr('data-id');
+      instApp.getFoll(userId, 'followed-by');
+    });
+
+    $body.on('click', '#follows', function(e){
+      e.preventDefault();
+      $('.pages').hide();
+      $('#followers').show();
+      var userId = $('#profile_picture').attr('data-id');
+      instApp.getFoll(userId, 'follows');
+    });
+
+    // Add Handler for useravatar for view him profile
+    $body.on('click', '.follow-avatar', function(e){
+      e.preventDefault();
+      var userId = $(this).data('url');
+      instApp.userInfo(userId);
+      instApp.getPhotos(userId, 'thumb');
+      $('.pages').hide();
+      $('#profile-page').show();
+    })
+
+  });
+
+</script>
+
+</body>
+</html>

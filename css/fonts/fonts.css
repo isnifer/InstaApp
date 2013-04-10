@@ -1,0 +1,4 @@
+@font-face {
+  font-family: Billabong; /* Имя шрифта */
+  src: url(billabong.eot), url(billabong.ttf) ; /* Путь к файлу со шрифтом */
+}

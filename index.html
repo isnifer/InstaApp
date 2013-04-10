@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Instagram App by iSnifer</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script type="text/javascript" src="js/jquery-1.9.1.min.js"></script>
+</head>
+<body>
+
+<a href="#" id="auth">Авторизация</a>
+
+<script type="text/javascript">
+
+  $('#auth').on('click', function(e){
+    e.preventDefault();
+    var redirectUri = 'http://insta.app';
+    var clientId = '7cc73a7b070d4cb0b74b71d47addbdba';
+    window.location.href = 'https://instagram.com/oauth/authorize/?client_id=' + clientId + '&redirect_uri=' + redirectUri + '/auth.html&response_type=token&code&scope=likes+comments+relationships';
+  });
+
+</script>
+
+</body>
+</html>
