@@ -426,12 +426,11 @@ div#popular-page input#random-search{
 }
 
 div#popular-page ul#popular-photos{
-  display: block;
   margin: 0;
   padding: 0;
   list-style: none;
   overflow-y: auto;
-  height: 1000px;
+  height: 718px;
   position: relative;
 }
 

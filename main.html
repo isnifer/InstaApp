@@ -76,7 +76,7 @@
     </header>
 
     <div id="search-users-hashes">
-      <input type="text" id="random-search" placeholder="Поиск пользователей и хэштегов"/>
+      <input type="text" id="random-search" placeholder="Поиск фото по хэштегу"/>
     </div>
 
     <ul id="popular-photos">
@@ -210,7 +210,8 @@
             }
             html = html + '<li class="instaphoto"><img class="fancybox" href="' + photos[i].images.standard_resolution.url + '" src="' + photos[i].images.thumbnail.url + '" title="' + caption + '" /></li>';
           }
-          $popularPhotos.html(html).mCustomScrollbar({
+          $popularPhotos.html(html);
+          $popularPhotos.mCustomScrollbar({
             theme: "dark-thin",
             mouseWheel: true,
             mouseWheelPixels: 400,
@@ -283,6 +284,33 @@
           });
         }
       });
+    };
+
+    this.searchByTag = function(tagName){
+      $.ajax({
+        type: 'GET',
+        url: 'https://api.instagram.com/v1/tags/' + tagName + '/media/recent?max_id=40&min_id=10&access_token=' + this.access_token,
+        dataType: 'JSONP',
+        success: function(data) {
+          var photos = data.data, photoLen = photos.length, $popularPhotos = $('#popular-photos'), html = '';
+          console.log(photos);
+          for (var i=0; i<photoLen; i++){
+            if (photos[i].caption != null) {
+              var caption = photos[i].caption.text;
+            } else {
+              caption = '';
+            }
+            html = html + '<li class="instaphoto"><img class="fancybox" href="' + photos[i].images.standard_resolution.url + '" src="' + photos[i].images.thumbnail.url + '" title="' + caption + '" /></li>';
+          }
+          $popularPhotos.html(html);
+          $popularPhotos.mCustomScrollbar({
+            theme: "dark-thin",
+            mouseWheel: true,
+            mouseWheelPixels: 400,
+            autoHideScrollbar: true
+          });
+        }
+      })
     };
 
     /*  Not Working, need permission from API Developers, but they keep silence
@@ -408,7 +436,15 @@
       instApp.getPhotos(userId, 'thumb');
       $('.pages').hide();
       $('#profile-page').show();
-    })
+    });
+
+    // Add Handler for search by hashtag
+    $('#random-search').keydown(function(e){
+      if (e.which == 13) {
+        var searchValue = $('#random-search').val();
+        instApp.searchByTag(searchValue);
+      }
+    });
 
   });
 
